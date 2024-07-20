@@ -8,6 +8,7 @@ const multer = require('multer');
 const DatauriParser = require('datauri/parser');
 const cloudinary = require('cloudinary').v2;
 const path = require('path');
+const { getRooms, postAddRoom } = require('../controllers/room');
 
 const upload = multer();
 const parser = new DatauriParser();
@@ -17,37 +18,26 @@ cloudinary.config({
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
-console.log("CLOUD_NAME:", process.env.CLOUD_NAME);
-console.log("API_KEY:", process.env.API_KEY);
-console.log("API_SECRET:", process.env.API_SECRET);
-router.get('/getrooms', async (req, res, next) => {
-    try {
-        const rooms = await Room.find().populate({
+router.get('/getrooms', getRooms);
+
+router.post('/addroom', postAddRoom);
+router.get('/getMessages/:id',async (req,res,next)=>{
+    const {id}=req.params;
+    try{
+        let room=await Room.findOne({_id:id}).populate({
             path: 'messages',
             populate: {
                 path: 'sender',
                 model: 'User',
-                select: 'username',
+                select: 'username image',
             },
-        });
+        })
 
-        return res.status(200).json({ rooms });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ msg: "Internal Server error" });
+        res.json({room});
+    }catch(err){
+        res.status(500).json({ msg: "Internal server error" });
     }
-});
-
-router.post('/addroom', async (req, res, next) => {
-    const { name, description } = req.body;
-    try {
-        const room = await Room.create({ name, description });
-        return res.status(200).json({ room });
-    } catch (err) {
-        return res.status(500).json({ msg: "Internal Server error" });
-    }
-});
-
+})
 router.post('/addMsg', upload.single('file'), async (req, res, next) => {
     try {
         const { msg, roomId, username } = req.body;
@@ -64,7 +54,7 @@ router.post('/addMsg', upload.single('file'), async (req, res, next) => {
         room.messages.push(message._id);
         await room.save();
 
-        const popMessage = await Message.findOne({ _id: message._id }).populate('sender');
+        const popMessage = await Message.findOne({ _id: message._id }).populate('sender', 'username image');
         console.log("Message created and populated:", popMessage);
 
         if (file) {
@@ -84,7 +74,15 @@ router.post('/addMsg', upload.single('file'), async (req, res, next) => {
             }
         }
 
-        res.status(200).json({ message: popMessage });
+        res.status(200).json({ 
+            message: {
+                ...popMessage.toObject(),
+                sender: {
+                    username: popMessage.sender.username,
+                    image: popMessage.sender.image
+                }
+            } 
+        });
     } catch (err) {
         console.error("Error handling addMsg:", err);
         res.status(500).json({ msg: "Internal server error" });

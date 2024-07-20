@@ -1,49 +1,94 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserLogin, setSocketConnection } from '../../functions/UserSlice/UserSlice';
 import { Link, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
-import { connectSocket } from '../../SocketManager/SocketManager';
+
 const Login = () => {
-    const navigate=useNavigate();
+    const navigate = useNavigate();
     const [username, setusername] = useState('');
     const [password, setpassword] = useState('');
     const [email, setemail] = useState('');
-    const [view,setview]=useState(0);
-    const data=useSelector(state=>state.user);
-    const dispatch=useDispatch();
-    
-    const loginHandler=async (ev)=>{
+    const [view, setview] = useState(0);
+    const data = useSelector(state => state.user);
+    const dispatch = useDispatch();
+
+    const loginHandler = async (ev) => {
         ev.preventDefault();
-        setview(view+1);
+        setview(view + 1);
         await dispatch(getUserLogin({
             username,
             password,
             email
-        }))
+        }));
+    };
 
-    }
-    useEffect(()=>{
-        if(data.isLoggedIn){
+    useEffect(() => {
+        if (data.isLoggedIn) {
             navigate(`/profile`);
         }
         setemail('');
         setpassword('');
         setusername('');
-    },[data])
-  return (
-    <>
-        <form onSubmit={loginHandler} className='w-2/5 mx-auto flex flex-col gap-y-5 border border-stone-500 px-7 py-4 mt-16 text-black'>
-            <input type='text' className='p-2 bg-orange-100' placeholder='Enter Username' onChange={(ev)=>setusername(ev.target.value)} value={username}/>
-            <input type='text' className='p-2 bg-orange-100' placeholder='Enter Email' onChange={(ev)=>setemail(ev.target.value)} value={email}/>
-            <input type='password' className='p-2 bg-orange-100' placeholder='Enter Password' onChange={(ev)=>setpassword(ev.target.value)} value={password}/>
-            <button type='submit' className='w-32 mx-auto bg-zinc-950 p-1.5 rounded-2xl text-white'>Login</button>
+    }, [data]);
 
-            <div className='text-white'>New User : <Link to={'/signup'} className='hover:text-emerald-500'>Signup</Link></div>
-            <div className='text-white'>{view==1?data.msg:""}</div>
-        </form>
-    </>
-  )
-}
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-900">
+            <form onSubmit={loginHandler} className="w-full max-w-lg bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 className="text-2xl font-bold mb-6 text-center text-white">Login</h2>
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="username">
+                        Username
+                    </label>
+                    <input
+                        type="text"
+                        id="username"
+                        className="w-full p-3 border rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Enter Username"
+                        onChange={(ev) => setusername(ev.target.value)}
+                        value={username}
+                    />
+                </div>
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="email">
+                        Email
+                    </label>
+                    <input
+                        type="text"
+                        id="email"
+                        className="w-full p-3 border rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Enter Email"
+                        onChange={(ev) => setemail(ev.target.value)}
+                        value={email}
+                    />
+                </div>
+                <div className="mb-6">
+                    <label className="block text-gray-400 text-sm font-bold mb-2" htmlFor="password">
+                        Password
+                    </label>
+                    <input
+                        type="password"
+                        id="password"
+                        className="w-full p-3 border rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Enter Password"
+                        onChange={(ev) => setpassword(ev.target.value)}
+                        value={password}
+                    />
+                </div>
+                <button
+                    type="submit"
+                    className="w-full bg-indigo-500 text-white p-3 rounded-lg hover:bg-indigo-700 transition duration-300"
+                >
+                    Login
+                </button>
+                <div className="text-white text-center mt-4">
+                    New User? <Link to={'/signup'} className='hover:text-emerald-500'>Signup</Link>
+                </div>
+                <div className="text-white text-center mt-2">
+                    {view === 1 ? data.msg : ""}
+                </div>
+            </form>
+        </div>
+    );
+};
 
-export default Login
+export default Login;

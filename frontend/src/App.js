@@ -1,11 +1,10 @@
-import React from 'react'
-import { Outlet, Route, Routes } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import CropSuitability from './components/SuitabilityForm/CropSuitability'
 import IrrigationRecommendation from './components/SuitabilityForm/IrrigationRecommendation'
 import CropRecommended from './components/CropRecommended/CropRecommended'
 import IrrigationInfo from './components/IrrigationInfo/IrrigationInfo'
 import Weather from './components/Weather/Weather'
-import Layout from './Layout'
 import WeatherData from './components/WeatherData/WeatherData'
 import Signup from './components/Signup/Signup'
 import Login from './components/Login/Login'
@@ -16,8 +15,19 @@ import ChatBox from './components/ChatBox/ChatBox'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
 import Hero from './components/Hero/Hero'
+import Inventory from './components/Inventory/Inventory'
+import AddItem from './components/AddItem/AddItem'
+import Cart from './components/Cart/Cart'
+import { useDispatch } from 'react-redux'
+import { getUserOnRefresh } from './functions/UserSlice/UserSlice'
+import Order from './components/Order/Order'
+import PaymentSuccess from './components/PaymentPages/PaymentSuccess'
 
 const App = () => {
+  const dispatch=useDispatch();
+  useEffect(()=>{
+    dispatch(getUserOnRefresh());
+  },[])
   return (
     <div className="flex flex-col min-w-screen min-h-screen bg-slate-800 text-white">
       <Navbar/>
@@ -40,6 +50,11 @@ const App = () => {
           <Route path='addroom' element={<AddRoom/>}/>
           <Route path=':id' element={<ChatBox/>}/>
         </Route>
+        <Route path='/inventory' element={<Inventory/>}/>
+        <Route path='/addItem' element={<AddItem/>}/>
+        <Route path='/cart' element={<Cart/>}/>
+        <Route path='/orders' element={<Order/>}/>
+        <Route path='/payment/success/:id' element={<PaymentSuccess/>}/>
       </Routes>
       </main>
       <Footer/>

@@ -4,6 +4,7 @@ const initialState={
     room:[],
     msg:""
 }
+const MAX_MESSAGES=15;
 export const RoomSlice=createSlice({
     name:'room',
     initialState,
@@ -21,13 +22,21 @@ export const RoomSlice=createSlice({
         newMsg: (state, action) => {
             state.room = state.room.map(r => {
                 if (r._id === action.payload.roomId) {
+                    const newMessages=[...r.messages, {
+                        text: action.payload.msg.text,
+                        sender: {
+                            username:action.payload.msg.sender.username,
+                            image:action.payload.msg.sender.image
+                        },
+                        img: action.payload.msg.img
+                    }]
+
+                    if(newMessages.length>MAX_MESSAGES){
+                        newMessages.splice(0,1);
+                    }
                     return {
                         ...r,
-                        messages: [...r.messages, {
-                            text: action.payload.msg.text,
-                            sender: action.payload.msg.sender,
-                            img: action.payload.msg.img
-                        }]
+                        messages: newMessages
                     };
                 }
                 return r;
@@ -56,7 +65,7 @@ export const addToRooms=({name,description})=>async (dispatch)=>{
         dispatch(addRoom({room:{},msg:"Internal server error"}))
     }
 }
-export const addnewMsg = ({ room, msg, username, formData }) => async (dispatch) => {
+export const addnewMsg = ({ room, msg, username, formData,image }) => async (dispatch) => {
     try {
         let { data } = await axios.post(`http://localhost:3000/room/addMsg`, formData)
 
@@ -64,7 +73,10 @@ export const addnewMsg = ({ room, msg, username, formData }) => async (dispatch)
         await dispatch(newMsg({
             msg: {
                 text: data.message.text,
-                sender: {username},
+                sender: {
+                            username:data.message.sender.username,
+                            image:data.message.sender.image
+                        },
                 img: data.message.img
             },
             roomId: room._id

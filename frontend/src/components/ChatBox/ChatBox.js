@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { addnewMsg, newMsg } from '../../functions/RoomSlice/RoomSlice';
 import { connectSocket } from '../../SocketManager/SocketManager';
+import { FaPaperPlane, FaPaperclip } from 'react-icons/fa';
 
 const ChatBox = () => {
     const [message, setMessage] = useState('');
@@ -18,13 +19,23 @@ const ChatBox = () => {
     const [imgRec, setImgRec] = useState(false);
     const [activeUsers, setActiveUsers] = useState(0);
     const currentRoom = useMemo(() => rooms.find(r => r._id === id) || {}, [rooms, id]);
-
+    // const [oldMessagesRoom,setoldMessagesRoom]=useState({});
+    // const [showMore,setshowMore]=useState(false);
     const scrollIntoView = useCallback(() => {
         lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
     }, []);
-    const replyHandler=()=>{
+
+    const replyHandler = () => {
         
     }
+    // const showMoreHandler=async (ev)=>{
+    //     //fetch all messages from backend
+    //     if(currentRoom._id){
+    //         let {data}=await axios.get(`http://localhost:3000/room/getMessages/${currentRoom._id}`);
+    //         setoldMessagesRoom(data.room);
+    //         setshowMore(false);
+    //     }
+    // }
     useEffect(() => {
         scrollIntoView();
     }, [currentRoom.messages, scrollIntoView]);
@@ -41,13 +52,14 @@ const ChatBox = () => {
                 setActiveUsers(count);
             };
 
-            const handleNewChat = async ({ msg, username, imgUrl }) => {
+            const handleNewChat = async ({ msg, username, imgUrl, image }) => {
+                // if(currentRoom.messages.length + 1 >15) setshowMore(true);
                 if (user.username !== username) {
                     await dispatch(newMsg({
                         msg: {
                             text: msg,
-                            sender: { username },
-                            img: imgUrl
+                            sender: { username, image },
+                            img: imgUrl,
                         },
                         roomId: currentRoom._id
                     }));
@@ -82,14 +94,14 @@ const ChatBox = () => {
             formData.append('username', user.username);
             
             try {
-                const result = await dispatch(addnewMsg({ room: currentRoom, msg: message.trim(), username: user.username, formData }));
+                const result = await dispatch(addnewMsg({ room: currentRoom, msg: message.trim(), username: user.username, formData, image: user.image }));
                 const imgUrl = result?.message?.img || '';
-                
                 socket.emit('newmsg', { 
                     msg: message.trim(),
                     room: currentRoom._id,
                     username: user.username,
-                    imgUrl
+                    imgUrl,
+                    image: user.image
                 });
 
                 setMessage('');
@@ -106,50 +118,69 @@ const ChatBox = () => {
     };
 
     return (
-        <div className="w-2/3 right-0 border h-screen flex flex-col bg-[url('https://res.cloudinary.com/dytld8d0r/image/upload/v1720176568/chatback_ovgfgs.avif')] text-black">
-
-            <div className='flex-1 overflow-y-auto'>
-                {Object.keys(currentRoom).length === 0 ? (
-                    <div className='flex items-center justify-center h-full'>No room selected</div>
-                ) : (
-                    <div className='space-y-2 relative'>
-                        Active Users: {activeUsers}
-                        {currentRoom.messages && currentRoom.messages.map((msg, index) => {
-                            return (
-                                <div key={index} className={`max-w-fit min-w-40 flex ${msg.sender.username === user.username ? 'ml-auto mr-10' : 'ml-10'}`}>
-                                    <button onClick={replyHandler}>⬇️</button>
-                                    <div className={`border border-slate-800 rounded p-2 max-w-fit min-w-40 ${msg.sender.username === user.username ? 'bg-green-300' : 'bg-gray-400'}`}>
-                                        <div className='font-bold text-sm '>{msg.sender.username}</div>
-                                        {msg.img && <img src={msg.img} alt="Shared image" onError={(e) => {
-                                            e.target.src = 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHVncWlzc2J1N2FqNDZoZmFxMG5vYWtmaDRyeTgwdnNjY3FxOGF2MCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjI6SIIHBdRxXI40/giphy.webp';
-                                            e.target.onerror = null;
-                                        }} className="w-80 h-auto mb-2 hover:w-screen" />}
-                                        <div>{msg.text}</div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        <div ref={lastMessageRef} />
-                    </div>
-                )}
+        <div className="flex flex-col h-screen bg-gray-900 text-gray-100">
+            <div className="bg-gray-800 shadow-md p-4">
+                <h2 className="text-2xl font-semibold text-gray-100">{currentRoom.name || 'Chat'}</h2>
+                <p className="text-sm text-gray-400">Active Users: {activeUsers}</p>
             </div>
 
-            <form onSubmit={submitHandler} className="flex items-center px-4 py-2 bg-white">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {Object.keys(currentRoom).length === 0 ? (
+                    <div className='flex items-center justify-center h-full text-gray-500'>
+                        Select a room to start chatting
+                    </div>
+                ) : (
+                    <>
+
+                            {currentRoom.messages.map((msg, index) => {
+                                const isOwnMessage = msg.sender.username === user.username;
+                                return (
+                                    <div key={index} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`flex items-end space-x-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                                            <img src={msg.sender.image} alt={msg.sender.username} className="w-8 h-8 rounded-full" />
+                                            <div className={`rounded-lg p-3 ${isOwnMessage ? 'bg-blue-600 text-white' : 'bg-gray-700'}`}>
+                                                <p className={`text-xs mb-1 ${isOwnMessage ? 'text-blue-200' : 'text-gray-400'}`}>{msg.sender.username}</p>
+                                                {msg.img && <img src={msg.img} alt="Shared" className="max-w-full rounded-lg mb-2" />}
+                                                <p>{msg.text}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                            )})}
+                    </>
+                )}
+                <div ref={lastMessageRef} />
+            </div>
+
+            <form onSubmit={submitHandler} className="bg-gray-800 p-4 flex items-center space-x-2">
+                <button 
+                    type="button"
+                    onClick={() => fileInputRef.current.click()}
+                    className="p-2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                >
+                    <FaPaperclip />
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => setFile(e.target.files[0])}
+                    className="hidden"
+                />
                 <input
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:border-blue-500"
+                    className="flex-1 p-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <label className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-lg cursor-pointer">
-                    <input type="file" ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} className="hidden" />
-                    <span>Upload</span>
-                </label>
-                <button type="submit" className="px-4 py-2 ml-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Send</button>
+                <button 
+                    type="submit"
+                    className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <FaPaperPlane />
+                </button>
             </form>
         </div>
     );
 };
 
-export default ChatBox;
+export default ChatBox

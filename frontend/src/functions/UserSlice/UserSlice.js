@@ -1,5 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { setCart } from "../CartSlice/CartSlice";
+import { setOrders } from "../OrderSlice/OrderSlice";
 const initialState={
     isLoggedIn:false,
     msg:"",
@@ -32,20 +34,9 @@ export const UserSlice=createSlice({
 })
 export const {userSignup,userLogin,setUser,userLogout}=UserSlice.actions
 
-export const getUserSignup=({username,email,password})=>async (dispatch)=>{
+export const getUserSignup=({formData})=>async (dispatch)=>{
     try{
-        const {data}=await axios.post(`http://localhost:3000/user/signup`,{
-            username,
-            password,
-            email
-        })
-        if(data.msg=='User already exists'){
-            return dispatch(userSignup({
-                isLoggedIn:false,
-                msg:data.msg,
-                user:{}
-            }))
-        }
+        const {data}=await axios.post(`http://localhost:3000/user/signup`,formData)
         return dispatch(userSignup({
             isLoggedIn:false,
             msg:"Sign up success",
@@ -54,7 +45,7 @@ export const getUserSignup=({username,email,password})=>async (dispatch)=>{
     }catch(err){
         dispatch(userSignup({
             isLoggedIn:false,
-            msg:"internal server error",
+            msg:err.response.data.message,
             user:{}
         }))
     }
@@ -63,37 +54,32 @@ export const getUserSignup=({username,email,password})=>async (dispatch)=>{
 export const getUserLogin=({username,password,email})=>async (dispatch)=>{
     try{
 
-        const {data}=await axios.post(`http://localhost:3000/user/login`,{
+        const { data } = await axios.post(`http://localhost:3000/user/login`, {
             username,
             password,
             email
-        })
-        
-        if(data.userExists==false){
-            return dispatch(userLogin({
-                user:{},
-                isLoggedIn:false,
-                msg:"User not exists"
-            }))
-        }
+          }, {
+            withCredentials: true
+          });
 
-        if(data.userExists==true){
-            return dispatch(userLogin({
-                user:{},
-                isLoggedIn:false,
-                msg:"Invalid password"
-            }))
-        }
+          const user={};
+        Object.keys(data.user).forEach((key)=>{
+            if(key!='cart' && key!='orders'){
+                user[key]=data.user[key];
+            }
+        })
+        dispatch(setCart(data.user.cart));
+        dispatch(setOrders(data.user.orders));
         return dispatch(userLogin({
-            user:data.user,
+            user,
             isLoggedIn:true,
-            msg:"success"
+            msg:data.message
         }))
     }catch(err){
         dispatch(userLogin({
             isLoggedIn:false,
             user:{},
-            msg:"Internal Server error"
+            msg:err.response.data.message
         }))
     }
 }
@@ -103,10 +89,43 @@ export const getUserLogout=({username,password,email})=> async (dispatch)=>{
             username,
             password,
             email
+        },{
+            withCredentials:true,
         })
         dispatch(userLogout());
+        dispatch(setCart([]));
+        dispatch(setOrders([]));
     }catch(err){
+        console.log(err.response.data.message);
+    }
+}
 
+export const updateUserInfo=({username,updates})=> async (dispatch)=>{
+    try{
+        const {data}=await axios.patch(`http://localhost:3000/user/update/${username}`,updates);
+        dispatch(setUser(data.user));
+    }catch(err){
+        console.log(err.response.data.message);
+    }
+}
+
+export const getUserOnRefresh=()=> async (dispatch)=>{
+    try{
+        const {data}=await axios.get(`http://localhost:3000/user/refresh`,{
+            withCredentials:true
+        })
+        const user={};
+        Object.keys(data.user).forEach((key)=>{
+            if(key!='cart' && key!='orders'){
+                user[key]=data.user[key];
+            }
+        })
+        console.log(data.user);
+        dispatch(setUser(user));
+        dispatch(setCart(data.user.cart));
+        dispatch(setOrders(data.user.orders));
+    }catch(err){
+        console.log(err.response.data.message);
     }
 }
 export default UserSlice.reducer;
