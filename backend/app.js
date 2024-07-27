@@ -11,6 +11,7 @@ const roomRouter=require('./routes/room');
 const cookieParser=require('cookie-parser');
 const adminRouter=require('./routes/admin');
 const cartRouter=require('./routes/cart');
+const inventoryRouter=require('./routes/inventory');
 const {Server}=require('socket.io');
 const Message=require('./models/message');
 const { default: axios } = require('axios');
@@ -30,6 +31,8 @@ app.use('/user',userRouter);
 app.use('/room',roomRouter);
 app.use('/admin',adminRouter);
 app.use('/cart',cartRouter);
+
+app.use('/inventory',inventoryRouter);
 const httpServer=createServer(app);
 const io = new Server(httpServer, {
     cors: {
@@ -100,7 +103,7 @@ app.get('/gpt/tip', async (req, res, next) => {
     }
 });
 const PORT=3000;
-mongoose.connect('mongodb://127.0.0.1:27017/FarmerDB')
+mongoose.connect(`mongodb+srv://chirag:${process.env.DB_PASSWORD}@cluster0.ows0qor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`)
 .then(()=>{
     httpServer.listen(PORT,()=>{
         console.log(`http://localhost:${PORT}`);

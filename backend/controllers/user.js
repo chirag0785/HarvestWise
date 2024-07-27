@@ -2,7 +2,7 @@ const User = require('../models/user');
 const jwt=require('jsonwebtoken');
 const ErrorWrapper = require('../utils/ErrorWrapper');
 const ErrorHandler = require('../utils/ErrorHandler');
-const uploadOnCloudinary = require('../utils/uploadOnCloudinary');
+const {uploadOnCloudinary, uploadBatchOnCloudinary} = require('../utils/uploadOnCloudinary');
 const getDataUri=require('../utils/datauriparser');
 const Inventory=require('../models/inventory');
 module.exports.postSignup=ErrorWrapper(async (req,res,next)=>{
@@ -247,3 +247,71 @@ module.exports.getUserOnRefresh = ErrorWrapper(async (req, res, next) => {
         }
     }
 });
+
+
+module.exports.postAddReview=ErrorWrapper(async (req,res,next)=>{
+
+    const {username,userId,itemId,review}=req.body;
+    let user;
+    try{
+        user=await User.findOne({_id:userId});
+        if(!user){
+            throw new ErrorHandler(400,"user not exists while post add review");
+        }
+    }catch(err){
+        throw new ErrorHandler(500,"can't access db right now while post add review");
+    }
+
+    let item;
+    try{
+        item=await Inventory.findOne({_id:itemId});
+        if(!item){
+            throw new ErrorHandler(400,"item not exists while post add review");
+        }
+    }catch(err){
+        throw new ErrorHandler(500,"can't access db right now while post add review");
+    }
+    
+    const fileDataUris=req.files.map((file)=> getDataUri(file));
+    let response;
+    try{
+        response=await uploadBatchOnCloudinary(fileDataUris);
+    }catch(err){
+        throw new ErrorHandler(500,"error while uploading images of review");
+    }
+    
+    const urls=response.map((image)=> image.secure_url);
+
+    item.reviews.push({username,review,images:urls,id:userId});
+
+    await item.save();
+    res.status(200).json({msg:"review added success"});
+})
+
+
+module.exports.editReview=ErrorWrapper(async (req,res,next)=>{
+    const {reviewId,review,itemId}=req.body;
+    console.log(itemId,"here");
+    let item;
+    try{
+        item=await Inventory.findOne({_id:itemId});
+        if(!item){
+            throw new ErrorHandler(400,"Item not found while edit review");
+        }
+    }catch(err){
+        throw new ErrorHandler(500,"can't access db right now while edit review");
+    }
+
+
+    const ind=item.reviews.findIndex((r)=> r._id.toString()===reviewId);
+
+    if(ind==-1){
+        throw new ErrorHandler(400,"review not found while edit review");
+    }
+
+    item.reviews[ind].review=review;
+
+    await item.save();
+
+    res.status(200).json({msg:"review edit successs"});
+})

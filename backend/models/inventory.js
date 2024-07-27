@@ -2,10 +2,6 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const reviewSchema = new Schema({
-    username: {
-        type: String,
-        required: true
-    },
     timeOfReview: {
         type: Date,
         default: Date.now
@@ -14,6 +10,7 @@ const reviewSchema = new Schema({
         type: String,
         required: true
     },
+    images:[String],
     id: {
         type: Schema.Types.ObjectId,
         ref: 'User',

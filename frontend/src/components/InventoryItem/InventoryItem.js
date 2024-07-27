@@ -8,12 +8,15 @@ const InventoryItem = ({ item , isAdmin}) => {
   const navigate=useNavigate();
   const user=useSelector(state=>state.user.user);
   const cart=useSelector(state=>state.cart.cart);
+  const getProductPage=(ev)=>{
+      navigate(`/inventory/${item._id}`);
+  }
   const addToCartHandler=async (ev)=>{
       await dispatch(postAddToCart({itemId:item._id, userId:user._id}));
       navigate(`/cart`);
   }
   return (
-    <div className="max-w-md mx-auto bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+    <div className="max-w-md mx-auto bg-gray-800 rounded-lg overflow-hidden shadow-lg" onClick={getProductPage}>
       <img src={item.imageUrl} alt={item.name} className="w-full h-64 object-cover object-center" />
       <div className="p-6">
         <div className="text-white font-bold text-xl mb-2">{item.name}</div>

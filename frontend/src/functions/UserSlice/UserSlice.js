@@ -128,4 +128,24 @@ export const getUserOnRefresh=()=> async (dispatch)=>{
         console.log(err.response.data.message);
     }
 }
+
+export const addReview=(formData)=>async (dispatch)=>{
+    try{
+        const {data}=await axios.post(`http://localhost:3000/user/addreview`,formData);
+    }catch(err){
+        console.log(err.response.data.message);
+    }
+}
+
+export const editReview=({reviewId,review,itemId})=>async (dispatch)=>{
+    try{
+        const {data}=await axios.post('http://localhost:3000/user/editreview',{
+            reviewId,
+            review,
+            itemId
+        });
+    }catch(err){
+        console.log(err.response.data.message);
+    }
+}
 export default UserSlice.reducer;

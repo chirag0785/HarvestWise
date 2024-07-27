@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const Order = () => {
+  const navigate = useNavigate();
+  const getReviewPage = (orderId) => {
+    navigate(`/review/${orderId}`);
+  };
   const orders = useSelector((state) => state.order.orders);
-
-  if (orders.length === 0) {
-    return <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
-      <h2 className="text-2xl font-bold">No Orders</h2>
-    </div>;
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+        <h2 className="text-2xl font-bold">No Orders</h2>
+      </div>
+    );
   }
 
   return (
@@ -29,7 +35,13 @@ const Order = () => {
               <span className="text-lg font-bold">₹{order.id.price}</span>
               <span className="text-sm text-gray-400">{new Date(order.time).toDateString()}</span>
             </div>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-300">Add Review</button>
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-300"
+              onClick={() => getReviewPage(order.id._id)}
+              aria-label={`Add Review for ${order.id.name}`}
+            >
+              Add Review
+            </button>
           </div>
         ))}
       </div>

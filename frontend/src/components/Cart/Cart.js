@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { decQuantity, incQuantity, setCart } from '../../functions/CartSlice/CartSlice';
 import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
-const stripePromise=loadStripe('pk_test_51Pe9evHsoAoo18IYuEcMEUhlr378mtHxLhKlxBrcIajnRpGm9sBPaOlM8MmqLhPrAXAkgf4U1JuaYt4n8icJXsK500jjAOLGBP')
+
+const stripePromise = loadStripe('pk_test_51Pe9evHsoAoo18IYuEcMEUhlr378mtHxLhKlxBrcIajnRpGm9sBPaOlM8MmqLhPrAXAkgf4U1JuaYt4n8icJXsK500jjAOLGBP');
+
 const Cart = () => {
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
@@ -22,47 +24,48 @@ const Cart = () => {
   const incQuantityHandler = (itemId) => {
     dispatch(incQuantity(itemId));
     setConfirm(true);
-  }
+  };
 
   const decQuantityHandler = (itemId) => {
     dispatch(decQuantity(itemId));
     setConfirm(true);
-  }
+  };
 
   const confirmHandler = async () => {
     await axios.post('http://localhost:3000/cart/updatecart', {
       cart,
-      userId: user.user._id
+      userId: user.user._id,
     });
     setConfirm(false);
-  }
-  const buyNowHandler=async (ev)=>{
-      const stripe=await stripePromise;
-      const {data}=await axios.post('http://localhost:3000/cart/buy',{
-        cart,
-        userId:user.user._id
-      })
-      const result=await stripe.redirectToCheckout({
-        sessionId:data.id
-      })
-      if(result.error){
-        console.log(result.error);
-      }
-      else{
-          console.log('idhar');
-          await dispatch(setCart(data.user.cart));
-      }
-  }
+  };
+
+  const buyNowHandler = async (ev) => {
+    const stripe = await stripePromise;
+    const { data } = await axios.post('http://localhost:3000/cart/buy', {
+      cart,
+      userId: user.user._id,
+    });
+    const result = await stripe.redirectToCheckout({
+      sessionId: data.id,
+    });
+    if (result.error) {
+      console.log(result.error);
+    } else {
+      console.log('idhar');
+      await dispatch(setCart(data.user.cart));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Your Cart</h1>
       {confirm && (
-                <button 
-                  onClick={confirmHandler}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300"
-                >
-                  Confirm Changes
-                </button>
+        <button
+          onClick={confirmHandler}
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300 mb-4"
+        >
+          Confirm Changes
+        </button>
       )}
       {cart.length === 0 ? (
         <p className="text-gray-500 text-center">Your cart is empty.</p>
@@ -87,15 +90,15 @@ const Cart = () => {
                 <p className="text-gray-400 mb-1">Category: {item.id.category}</p>
                 <div className="text-gray-400 mb-1 flex items-center">
                   <p>Quantity: </p>
-                  <button 
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 ml-2 rounded transition duration-300" 
+                  <button
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 ml-2 rounded transition duration-300"
                     onClick={() => incQuantityHandler(item._id)}
                   >
                     +
                   </button>
                   <p className="mx-2">{item.quantity}</p>
-                  <button 
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition duration-300" 
+                  <button
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded transition duration-300"
                     onClick={() => item.quantity > 0 && decQuantityHandler(item._id)}
                   >
                     -
@@ -107,9 +110,18 @@ const Cart = () => {
               </div>
             ))}
           </div>
+          {totalAmount > 0 && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={buyNowHandler}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
+              >
+                Buy Now
+              </button>
+            </div>
+          )}
         </>
       )}
-      {totalAmount>0 && <button onClick={()=>buyNowHandler(totalAmount)}>Buy Now</button>}
     </div>
   );
 };

@@ -22,6 +22,8 @@ import { useDispatch } from 'react-redux'
 import { getUserOnRefresh } from './functions/UserSlice/UserSlice'
 import Order from './components/Order/Order'
 import PaymentSuccess from './components/PaymentPages/PaymentSuccess'
+import Review from './components/Review/Review'
+import Product from './components/Product/Product'
 
 const App = () => {
   const dispatch=useDispatch();
@@ -55,6 +57,8 @@ const App = () => {
         <Route path='/cart' element={<Cart/>}/>
         <Route path='/orders' element={<Order/>}/>
         <Route path='/payment/success/:id' element={<PaymentSuccess/>}/>
+        <Route path='/review/:orderId' element={<Review/>}/>
+        <Route path='/inventory/:itemId' element={<Product/>}/>
       </Routes>
       </main>
       <Footer/>
